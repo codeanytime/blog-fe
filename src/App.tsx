@@ -1,25 +1,64 @@
-import React from 'react';
-import logo from './logo.svg';
-import './App.css';
+import React, { ReactNode } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from './context/AuthContext';
+import Header from './components/Header';
+import Footer from './components/Footer';
+import HomePage from './pages/HomePage';
+import PostDetailPage from './pages/PostDetailPage';
+import AdminPage from './pages/AdminPage';
+import NewPostPage from './pages/NewPostPage';
+import EditPostPage from './pages/EditPostPage';
+import CategoryPage from './pages/CategoryPage';
+
+interface AdminRouteProps {
+  children: ReactNode;
+}
 
 function App() {
+  const { isAuthenticated, isAdmin, loading } = useAuth();
+
+  // Protected route component
+  const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
+    if (loading) return <div className="loading">Loading...</div>;
+    if (!isAuthenticated || !isAdmin) return <Navigate to="/" />;
+    return <>{children}</>;
+  };
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Router>
+      <div className="app">
+        <Header />
+        <main className="main-content">
+          {loading ? (
+            <div className="loading-container">
+              <div className="loading-spinner"></div>
+            </div>
+          ) : (
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/post/:id" element={<PostDetailPage />} />
+              <Route path="/category/:slug" element={<CategoryPage />} />
+              <Route path="/admin" element={
+                <AdminRoute>
+                  <AdminPage />
+                </AdminRoute>
+              } />
+              <Route path="/admin/new-post" element={
+                <AdminRoute>
+                  <NewPostPage />
+                </AdminRoute>
+              } />
+              <Route path="/admin/edit-post/:id" element={
+                <AdminRoute>
+                  <EditPostPage />
+                </AdminRoute>
+              } />
+            </Routes>
+          )}
+        </main>
+        <Footer />
+      </div>
+    </Router>
   );
 }
 
