@@ -1,64 +1,18 @@
 
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { initiateGoogleLogin } from '../services/auth';
 
 const Login: React.FC = () => {
-    const { isAuthenticated, signInWithGoogle } = useAuth();
+    const { isAuthenticated } = useAuth();
     const navigate = useNavigate();
-    const googleButtonRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (isAuthenticated) {
             navigate('/');
         }
     }, [isAuthenticated, navigate]);
-
-    useEffect(() => {
-        const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
-
-        if (!googleClientId) {
-            if (googleButtonRef.current) {
-                googleButtonRef.current.innerHTML =
-                    '<div class="alert alert-warning">Google authentication is disabled. Please configure GOOGLE_CLIENT_ID to enable it.</div>';
-            }
-            return;
-        }
-
-        if (window.google && window.google.accounts && window.google.accounts.id) {
-            window.google.accounts.id.initialize({
-                client_id: googleClientId,
-                callback: handleCredentialResponse,
-            });
-
-            if (googleButtonRef.current) {
-                window.google.accounts.id.renderButton(
-                    googleButtonRef.current,
-                    { theme: 'outline', size: 'large', width: '100%' }
-                );
-            }
-        } else {
-            if (googleButtonRef.current) {
-                googleButtonRef.current.innerHTML =
-                    '<div class="alert alert-danger">Google Identity Services not loaded. Please check your internet connection.</div>';
-            }
-            console.error('Google Identity Services not loaded');
-        }
-    }, []);
-
-    const handleCredentialResponse = async (response: { credential: string }) => {
-        if (!signInWithGoogle) return;
-
-        try {
-            await signInWithGoogle();
-        } catch (error) {
-            console.error('Error during Google sign-in:', error);
-            if (googleButtonRef.current) {
-                googleButtonRef.current.innerHTML =
-                    '<div class="alert alert-danger">Authentication failed. Please try again.</div>';
-            }
-        }
-    };
 
     return (
         <div className="login-container">
@@ -70,7 +24,14 @@ const Login: React.FC = () => {
                     <p style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
                         Sign in with your Google account to continue
                     </p>
-                    <div ref={googleButtonRef} className="google-signin-button"></div>
+                    <button
+                        onClick={initiateGoogleLogin}
+                        className="btn btn-primary w-100"
+                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
+                    >
+                        <img src="https://www.google.com/favicon.ico" alt="Google" width="20" height="20" />
+                        Sign in with Google
+                    </button>
                 </div>
             </div>
         </div>

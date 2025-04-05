@@ -7,11 +7,19 @@ import axios, {
 import { Post, PageResponse, MenuItem } from '../types';
 
 // Define the backend API URL
-// Get API base URL from environment or use a default
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
+// For Replit, we need to use a special URL format to access the backend
+const isReplit = window.location.hostname.includes('replit');
+const baseUrl = isReplit 
+  ? `${window.location.protocol}//${window.location.hostname.replace(/^[^.]+/, '8080')}/api`
+  : process.env.REACT_APP_API_BASE_URL || 'http://localhost:8080/api';
+
+const API_BASE_URL = baseUrl;
 
 // For debugging
 console.log('Environment variable REACT_APP_API_BASE_URL:', process.env.REACT_APP_API_BASE_URL);
+console.log('Is Replit?', isReplit);
+console.log('Hostname:', window.location.hostname);
+console.log('Final API Base URL:', API_BASE_URL);
 
 console.log('API Base URL:', API_BASE_URL);
 
@@ -132,9 +140,14 @@ export const getMenu = async (): Promise<MenuItem[]> => {
     return response.data;
   } catch (error) {
     console.error('Menu API Error:', error);
-    // Create a fallback menu just with Home for debugging
-    console.log('Using fallback menu');
-    return [{ id: 0, label: 'Home', url: '/', order: 0, type: 'home' }];
+    // Create a fallback menu just with Home for graceful degradation
+    console.log('Using fallback menu due to backend unavailability');
+    // Return a basic menu structure that works without backend
+    return [
+      { id: 0, label: 'Home', url: '/', order: 0, type: 'home' },
+      { id: 1, label: 'Blog', url: '/blog', order: 1, type: 'page' },
+      { id: 2, label: 'Admin', url: '/admin', order: 2, type: 'admin' }
+    ];
   }
 };
 

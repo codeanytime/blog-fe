@@ -1,5 +1,5 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { loginWithGoogle, logout, getCurrentUser } from '../services/auth';
+import { initiateGoogleLogin, logout, getCurrentUser } from '../services/auth';
 import { User } from '../types';
 
 interface AuthContextType {
@@ -53,13 +53,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const signInWithGoogle = async (): Promise<User | null> => {
         try {
             setLoading(true);
-            const user = await loginWithGoogle();
-            if (user) {
-                setCurrentUser(user);
-                setIsAuthenticated(true);
-                setIsAdmin(user.role === 'ADMIN');
-            }
-            return user;
+            initiateGoogleLogin();
+            return null;
         } catch (error) {
             console.error('Google sign-in error:', error);
             throw error;
