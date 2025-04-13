@@ -1,6 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import BlogPost from './BlogPost';
-import { getPosts } from '../services/api';
+import React from 'react';
+import { Link } from 'react-router-dom';
 import { Post, PageResponse } from '../types';
 
 interface BlogPostListProps {
@@ -13,151 +12,138 @@ interface BlogPostListProps {
 }
 
 const BlogPostList: React.FC<BlogPostListProps> = ({
-    searchQuery = '',
-    posts: propPosts,
-    pagination,
-    currentPage: propCurrentPage,
+    searchQuery,
+    posts = [],
+    pagination = null,
+    currentPage = 0,
     onPageChange,
-    emptyMessage
+    emptyMessage = "No posts found"
 }) => {
-    const [posts, setPosts] = useState<Post[]>(propPosts || []);
-    const [loading, setLoading] = useState<boolean>(!propPosts);
-    const [error, setError] = useState<string | null>(null);
-    const [page, setPage] = useState<number>(propCurrentPage || 0);
-    const [hasMore, setHasMore] = useState<boolean>(pagination ? !pagination.last : true);
-    const postsPerPage = 5;
+    // Generate pagination controls
+    const renderPagination = () => {
+        if (!pagination || pagination.totalPages <= 1) return null;
 
-    // If component is controlled by props
-    const isControlled = propPosts !== undefined && pagination !== undefined;
+        const pages = [];
+        const startPage = Math.max(0, currentPage - 2);
+        const endPage = Math.min(pagination.totalPages - 1, currentPage + 2);
 
-    useEffect(() => {
-        if (propPosts) {
-            setPosts(propPosts);
-        }
-    }, [propPosts]);
-
-    useEffect(() => {
-        if (pagination) {
-            setHasMore(!pagination.last);
-        }
-    }, [pagination]);
-
-    useEffect(() => {
-        if (propCurrentPage !== undefined) {
-            setPage(propCurrentPage);
-        }
-    }, [propCurrentPage]);
-
-    useEffect(() => {
-        // Only fetch if not controlled by props
-        if (isControlled) return;
-
-        // Reset when search query changes
-        setPosts([]);
-        setPage(0);
-        setHasMore(true);
-        setLoading(true);
-        setError(null);
-    }, [searchQuery, isControlled]);
-
-    useEffect(() => {
-        // Don't fetch if component is controlled by props
-        if (isControlled) return;
-
-        const fetchPosts = async () => {
-            try {
-                setLoading(true);
-                const response: PageResponse<Post> = await getPosts(page, postsPerPage, searchQuery);
-
-                if (page === 0) {
-                    setPosts(response.content);
-                } else {
-                    setPosts(prevPosts => [...prevPosts, ...response.content]);
-                }
-
-                setHasMore(!response.last);
-                setError(null);
-            } catch (err) {
-                setError('Failed to load blog posts. Please try again later.');
-                console.error('Error fetching posts:', err);
-            } finally {
-                setLoading(false);
-            }
-        };
-
-        fetchPosts();
-    }, [page, searchQuery, isControlled]);
-
-    const loadMore = () => {
-        if (!loading && hasMore) {
-            if (onPageChange) {
-                // If controlled, call the provided callback
-                onPageChange(page + 1);
-            } else {
-                // If not controlled, handle pagination internally
-                setPage(prevPage => prevPage + 1);
-            }
-        }
-    };
-
-    const handleRetry = () => {
-        if (onPageChange) {
-            onPageChange(0);
-        } else {
-            setPage(0);
-        }
-    };
-
-    if (error) {
-        return (
-            <div className="error-container">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                </svg>
-                <p>{error}</p>
-                <button onClick={handleRetry} className="retry-button">
-                    Try Again
+        // Previous button
+        pages.push(
+            <li key="prev" className={`page-item ${currentPage === 0 ? 'disabled' : ''}`}>
+                <button
+                    className="page-link"
+                    onClick={() => onPageChange && onPageChange(currentPage - 1)}
+                    disabled={currentPage === 0}
+                >
+                    Previous
                 </button>
+            </li>
+        );
+
+        // Page numbers
+        for (let i = startPage; i <= endPage; i++) {
+            pages.push(
+                <li key={i} className={`page-item ${currentPage === i ? 'active' : ''}`}>
+                    <button
+                        className="page-link"
+                        onClick={() => onPageChange && onPageChange(i)}
+                    >
+                        {i + 1}
+                    </button>
+                </li>
+            );
+        }
+
+        // Next button
+        pages.push(
+            <li key="next" className={`page-item ${currentPage === pagination.totalPages - 1 ? 'disabled' : ''}`}>
+                <button
+                    className="page-link"
+                    onClick={() => onPageChange && onPageChange(currentPage + 1)}
+                    disabled={currentPage === pagination.totalPages - 1}
+                >
+                    Next
+                </button>
+            </li>
+        );
+
+        return (
+            <nav aria-label="Page navigation">
+                <ul className="pagination justify-content-center mt-4">
+                    {pages}
+                </ul>
+            </nav>
+        );
+    };
+
+    // Render loading state if posts are null
+    if (posts === null) {
+        return (
+            <div className="text-center my-5">
+                <div className="spinner-border text-primary" role="status">
+                    <span className="visually-hidden">Loading...</span>
+                </div>
+                <p className="mt-2">Loading posts...</p>
+            </div>
+        );
+    }
+
+    // Render empty state if no posts
+    if (posts.length === 0) {
+        return (
+            <div className="text-center my-5">
+                <div className="alert alert-info">
+                    {searchQuery ? `No posts found matching "${searchQuery}"` : emptyMessage}
+                </div>
             </div>
         );
     }
 
     return (
         <div className="blog-post-list">
-            {posts.length === 0 && !loading ? (
-                <div className="empty-state">
-                    <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M9 17H15M9.00001 3H15C16.1046 3 17 3.89543 17 5V19C17 20.1046 16.1046 21 15 21H9.00001C7.89544 21 7.00001 20.1046 7.00001 19V5C7.00001 3.89543 7.89544 3 9.00001 3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                    </svg>
-                    <h3>No posts found</h3>
-                    {searchQuery ? (
-                        <p>No results for "{searchQuery}". Try a different search term.</p>
-                    ) : (
-                        <p>{emptyMessage || 'There are no blog posts available yet.'}</p>
-                    )}
+            {posts.map(post => (
+                <div key={post.id} className="card mb-4">
+                    <div className="row g-0">
+                        {post.coverImage && (
+                            <div className="col-md-4">
+                                <img
+                                    src={post.coverImage}
+                                    className="img-fluid rounded-start"
+                                    alt={post.title}
+                                    style={{ height: '100%', objectFit: 'cover' }}
+                                />
+                            </div>
+                        )}
+                        <div className={post.coverImage ? 'col-md-8' : 'col-12'}>
+                            <div className="card-body">
+                                <h5 className="card-title">
+                                    <Link to={`/post/${post.id}`} className="text-decoration-none">
+                                        {post.title}
+                                    </Link>
+                                </h5>
+                                <div className="card-text">
+                                    {/* Strip HTML and limit to ~150 chars */}
+                                    {post.content
+                                        .replace(/<[^>]*>/g, '')
+                                        .substring(0, 150)
+                                        .trim()}
+                                    {post.content.length > 150 ? '...' : ''}
+                                </div>
+                                <div className="d-flex justify-content-between align-items-center mt-3">
+                                    <div className="small text-muted">
+                                        By {post.author?.name || 'Unknown'} | {new Date(post.createdAt).toLocaleDateString()}
+                                    </div>
+                                    <Link to={`/post/${post.id}`} className="btn btn-sm btn-outline-primary">
+                                        Read More
+                                    </Link>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            ) : (
-                <>
-                    {posts.map(post => (
-                        <BlogPost key={post.id} post={post} />
-                    ))}
+            ))}
 
-                    {loading && (
-                        <div className="loading-indicator">
-                            <div className="loading-spinner"></div>
-                            <span>Loading posts...</span>
-                        </div>
-                    )}
-
-                    {hasMore && !loading && (
-                        <div className="load-more-container">
-                            <button onClick={loadMore} className="load-more-button">
-                                Load More Posts
-                            </button>
-                        </div>
-                    )}
-                </>
-            )}
+            {renderPagination()}
         </div>
     );
 };

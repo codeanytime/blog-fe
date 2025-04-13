@@ -5,6 +5,7 @@ import ImageUploader from '../components/ImageUploader';
 import { getPostById, updatePost } from '../services/api';
 import { uploadImageToS3 } from '../services/s3';
 import { Post } from '../types';
+import '../styles/post-form.css';
 
 interface FormErrors {
     title?: string;
@@ -107,6 +108,20 @@ const EditPostPage: React.FC = () => {
         try {
             setSubmitting(true);
 
+            // Verify user is authenticated before attempting update
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                console.error('No authentication token found - cannot update post');
+                setErrors({
+                    ...errors,
+                    submit: 'Authentication error. Please login again.'
+                });
+                setSubmitting(false);
+                return;
+            }
+
+            console.log('Attempting to update post with token:', token ? 'Token exists' : 'No token');
+
             const postData = {
                 title,
                 content,
@@ -115,10 +130,30 @@ const EditPostPage: React.FC = () => {
                 published
             };
 
-            await updatePost(id, postData);
-            navigate(`/post/${id}`);
-        } catch (error) {
-            console.error('Error updating post:', error);
+            // Save post with auth token
+            try {
+                await updatePost(id, postData);
+                navigate(`/post/${id}`);
+            } catch (updateError: any) {
+                console.error('Post update error:', updateError);
+
+                // Handle Google OAuth error specifically
+                if (updateError.message && updateError.message.includes('Google')) {
+                    console.error('Google OAuth error detected during post update');
+                    setErrors({
+                        ...errors,
+                        submit: 'Authentication error. Please login again with username/password.'
+                    });
+                } else {
+                    setErrors({
+                        ...errors,
+                        submit: 'Failed to update post. Please try again.'
+                    });
+                }
+                setSubmitting(false);
+            }
+        } catch (error: any) {
+            console.error('Error in update process:', error);
             setErrors({
                 ...errors,
                 submit: 'Failed to update post. Please try again.'

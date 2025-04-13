@@ -1,4 +1,3 @@
-// User types
 export interface User {
   id: number;
   name: string;
@@ -11,7 +10,6 @@ export interface User {
   updatedAt: string;
 }
 
-// Category types
 export interface Category {
   id: number;
   name: string;
@@ -23,7 +21,6 @@ export interface Category {
   updatedAt?: string;
 }
 
-// Post types
 export interface Post {
   id: number;
   title: string;
@@ -40,18 +37,16 @@ export interface Post {
   primaryCategory?: Category;
 }
 
-// Authentication types
 export interface AuthResponse {
   token: string;
   user: User;
 }
 
 export interface LoginCredentials {
-  email: string;
+  username: string;
   password: string;
 }
 
-// API response types
 export interface ApiError {
   message: string;
   status?: number;

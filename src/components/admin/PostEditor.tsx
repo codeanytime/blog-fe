@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getPostById, createPost, updatePost } from '../../services/api';
 import { getAllCategories } from '../../services/categories';
-import { uploadImageToS3 } from '../../services/s3';
 import Editor from '../Editor';
-import ImageUploader from '../ImageUploader';
+import ImageUploader from './ImageUploader';
 import { Post, Category } from '../../types';
 import { useAuth } from '../../context/AuthContext';
 
@@ -32,7 +31,6 @@ const PostEditor: React.FC = () => {
     });
 
     const [availableCategories, setAvailableCategories] = useState<Category[]>([]);
-    const [isUploading, setIsUploading] = useState<boolean>(false);
     const [isLoading, setIsLoading] = useState<boolean>(!!id);
     const [error, setError] = useState<string | null>(null);
     const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -122,19 +120,8 @@ const PostEditor: React.FC = () => {
         });
     };
 
-    const handleImageSelected = async (file: File) => {
-        setIsUploading(true);
-        try {
-            const imageUrl = await uploadImageToS3(file);
-            setFormData(prev => ({ ...prev, coverImage: imageUrl }));
-            setError(null);
-        } catch (err) {
-            console.error('Error uploading image:', err);
-            setError('Failed to upload image. Please try again.');
-        } finally {
-            setIsUploading(false);
-        }
-    };
+    // This function is no longer needed as we now use the ImageUploader component directly
+    // The handleImageSelected functionality is now handled inside the ImageUploader component
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -207,8 +194,10 @@ const PostEditor: React.FC = () => {
                 <div className="form-group">
                     <label className="form-label">Cover Image</label>
                     <ImageUploader
-                        onImageSelected={handleImageSelected}
-                        isUploading={isUploading}
+                        initialImage={formData.coverImage}
+                        onImageUpload={(imageUrl) => {
+                            setFormData(prev => ({ ...prev, coverImage: imageUrl }));
+                        }}
                     />
                     {formData.coverImage && (
                         <div className="image-preview">
@@ -293,7 +282,7 @@ const PostEditor: React.FC = () => {
                     <button
                         type="submit"
                         className="btn btn-primary"
-                        disabled={isSaving || isUploading}
+                        disabled={isSaving}
                     >
                         {isSaving ? 'Saving...' : isEditMode ? 'Update Post' : 'Create Post'}
                     </button>

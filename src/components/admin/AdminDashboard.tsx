@@ -91,15 +91,15 @@ const AdminDashboard: React.FC = () => {
             <h1>Admin Dashboard</h1>
 
             <div className="admin-actions">
-                <Link to="/admin/posts/new" className="btn btn-primary">
-                    Create New Post
+                <Link to="/new-post" className="btn btn-primary">
+                    <i className="bi bi-plus-circle me-2"></i>Create New Post
                 </Link>
                 <button
-                    className="btn btn-secondary ml-2"
+                    className="btn btn-secondary ms-2"
                     onClick={handleCreateSampleCategories}
                     disabled={isCategoryCreating}
                 >
-                    {isCategoryCreating ? 'Creating...' : 'Create Sample Categories'}
+                    <i className="bi bi-folder-plus me-2"></i>{isCategoryCreating ? 'Creating...' : 'Create Sample Categories'}
                 </button>
             </div>
 
@@ -131,17 +131,18 @@ const AdminDashboard: React.FC = () => {
                                         <td>{new Date(post.createdAt).toLocaleDateString()}</td>
                                         <td>
                                             <div className="admin-post-actions">
-                                                <Link to={`/posts/${post.id}`} className="btn btn-secondary">
-                                                    View
+                                                <Link to={`/post/${post.id}`} className="btn btn-sm btn-outline-secondary me-2" title="View Post">
+                                                    <i className="bi bi-eye"></i>
                                                 </Link>
-                                                <Link to={`/admin/posts/edit/${post.id}`} className="btn btn-primary">
-                                                    Edit
+                                                <Link to={`/edit-post/${post.id}`} className="btn btn-sm btn-outline-primary me-2" title="Edit Post">
+                                                    <i className="bi bi-pencil-square"></i>
                                                 </Link>
                                                 <button
                                                     onClick={() => handleDeletePost(post.id)}
-                                                    className="btn btn-danger"
+                                                    className="btn btn-sm btn-outline-danger"
+                                                    title="Delete Post"
                                                 >
-                                                    Delete
+                                                    <i className="bi bi-trash"></i>
                                                 </button>
                                             </div>
                                         </td>

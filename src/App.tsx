@@ -1,64 +1,89 @@
 import React, { ReactNode } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+
+// Components
 import Header from './components/Header';
 import Footer from './components/Footer';
+
+// Pages
 import HomePage from './pages/HomePage';
 import PostDetailPage from './pages/PostDetailPage';
-import AdminPage from './pages/AdminPage';
+import Login from './components/Login';
 import NewPostPage from './pages/NewPostPage';
 import EditPostPage from './pages/EditPostPage';
-import CategoryPage from './pages/CategoryPage';
+import AdminPage from './pages/AdminPage';
 
+import './App.css';
+
+// Protected route for admin content
 interface AdminRouteProps {
   children: ReactNode;
 }
 
-function App() {
+const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   const { isAuthenticated, isAdmin, loading } = useAuth();
 
-  // Protected route component
-  const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
-    if (loading) return <div className="loading">Loading...</div>;
-    if (!isAuthenticated || !isAdmin) return <Navigate to="/" />;
-    return <>{children}</>;
-  };
+  if (loading) {
+    return <div className="loading-container">
+      <div className="loading-spinner"></div>
+      <p>Loading...</p>
+    </div>;
+  }
 
+  if (!isAuthenticated || !isAdmin) {
+    // Redirect to login with state indicating from admin page
+    return <Navigate to="/login" state={{ fromAdmin: true }} />;
+  }
+
+  return <>{children}</>;
+};
+
+function App() {
   return (
-    <Router>
-      <div className="app">
-        <Header />
-        <main className="main-content">
-          {loading ? (
-            <div className="loading-container">
-              <div className="loading-spinner"></div>
-            </div>
-          ) : (
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/post/:id" element={<PostDetailPage />} />
-              <Route path="/category/:slug" element={<CategoryPage />} />
-              <Route path="/admin" element={
-                <AdminRoute>
-                  <AdminPage />
-                </AdminRoute>
-              } />
-              <Route path="/admin/new-post" element={
+    <div className="app">
+      <Header />
+
+      <main className="main-content">
+        <div className="container">
+          <Routes>
+            <Route path="/" element={<HomePage />} />
+            <Route path="/post/:id" element={<PostDetailPage />} />
+            <Route path="/login" element={<Login />} />
+
+            {/* Admin Routes */}
+            <Route
+              path="/new-post"
+              element={
                 <AdminRoute>
                   <NewPostPage />
                 </AdminRoute>
-              } />
-              <Route path="/admin/edit-post/:id" element={
+              }
+            />
+            <Route
+              path="/edit-post/:id"
+              element={
                 <AdminRoute>
                   <EditPostPage />
                 </AdminRoute>
-              } />
-            </Routes>
-          )}
-        </main>
-        <Footer />
-      </div>
-    </Router>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <AdminRoute>
+                  <AdminPage />
+                </AdminRoute>
+              }
+            />
+
+            <Route path="*" element={<Navigate to="/" />} />
+          </Routes>
+        </div>
+      </main>
+
+      <Footer />
+    </div>
   );
 }
 

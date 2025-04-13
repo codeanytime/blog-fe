@@ -1,30 +1,17 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const Search: React.FC = () => {
-    const navigate = useNavigate();
-    const location = useLocation();
     const [query, setQuery] = useState<string>('');
     const [isExpanded, setIsExpanded] = useState<boolean>(false);
-    const searchRef = useRef<HTMLDivElement | null>(null);
+    const searchRef = useRef<HTMLDivElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const navigate = useNavigate();
 
-    // Extract search query from URL on component mount
-    useEffect(() => {
-        const searchParams = new URLSearchParams(location.search);
-        const queryParam = searchParams.get('q');
-        if (queryParam) {
-            setQuery(queryParam);
-            setIsExpanded(true);
-        }
-    }, [location.search]);
-
-    // Handle clicks outside the search component
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-                if (query === '') {
-                    setIsExpanded(false);
-                }
+                setIsExpanded(false);
             }
         };
 
@@ -32,76 +19,75 @@ const Search: React.FC = () => {
         return () => {
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, [query]);
+    }, []);
 
-    const handleSearchSubmit = (e: React.FormEvent) => {
-        e.preventDefault();
-
-        if (query.trim()) {
-            navigate(`/?q=${encodeURIComponent(query.trim())}`);
-        } else {
-            navigate('/');
+    // Focus input when search is expanded
+    useEffect(() => {
+        if (isExpanded && inputRef.current) {
+            inputRef.current.focus();
         }
-    };
+    }, [isExpanded]);
 
-    const toggleSearch = () => {
+    const handleSearchClick = () => {
         setIsExpanded(!isExpanded);
-        if (!isExpanded) {
-            // Focus the input when expanding
-            setTimeout(() => {
-                const input = searchRef.current?.querySelector('input');
-                if (input) input.focus();
-            }, 100);
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+        e.preventDefault();
+        if (query.trim()) {
+            navigate(`/search?q=${encodeURIComponent(query.trim())}`);
+            setQuery('');
+            setIsExpanded(false);
         }
     };
 
-    const clearSearch = () => {
+    const handleClearSearch = () => {
         setQuery('');
-        navigate('/');
+        if (inputRef.current) {
+            inputRef.current.focus();
+        }
     };
 
     return (
-        <div
-            ref={searchRef}
-            className={`search-container ${isExpanded ? 'expanded' : ''}`}
-        >
-            {isExpanded ? (
-                <form onSubmit={handleSearchSubmit} className="search-form">
-                    <input
-                        type="text"
-                        value={query}
-                        onChange={(e) => setQuery(e.target.value)}
-                        placeholder="Search posts..."
-                        aria-label="Search posts"
-                        className="search-input"
-                    />
-
-                    {query && (
-                        <button
-                            type="button"
-                            onClick={clearSearch}
-                            className="clear-search-btn"
-                            aria-label="Clear search"
-                        >
-                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                            </svg>
-                        </button>
-                    )}
-
-                    <button type="submit" className="search-btn" aria-label="Search">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                        </svg>
-                    </button>
-                </form>
-            ) : (
-                <button onClick={toggleSearch} className="search-toggle-btn" aria-label="Open search">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M21 21L15 15M17 10C17 13.866 13.866 17 10 17C6.13401 17 3 13.866 3 10C3 6.13401 6.13401 3 10 3C13.866 3 17 6.13401 17 10Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+        <div ref={searchRef} className={`search-container ${isExpanded ? 'expanded' : ''}`}>
+            <form onSubmit={handleSubmit} className="search-form">
+                {isExpanded && (
+                    <>
+                        <input
+                            ref={inputRef}
+                            type="text"
+                            value={query}
+                            onChange={(e) => setQuery(e.target.value)}
+                            placeholder="Search articles..."
+                            className="search-input"
+                        />
+                        {query && (
+                            <button
+                                type="button"
+                                className="clear-search-btn"
+                                onClick={handleClearSearch}
+                                aria-label="Clear search"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                                </svg>
+                            </button>
+                        )}
+                    </>
+                )}
+                <button
+                    type="button"
+                    className="search-toggle-btn"
+                    onClick={handleSearchClick}
+                    aria-label={isExpanded ? "Close search" : "Open search"}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <circle cx="11" cy="11" r="8"></circle>
+                        <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
                     </svg>
                 </button>
-            )}
+            </form>
         </div>
     );
 };

@@ -5,6 +5,7 @@ import ImageUploader from '../components/ImageUploader';
 import { createPost } from '../services/api';
 import { uploadImageToS3 } from '../services/s3';
 import { Post } from '../types';
+import '../styles/post-form.css';
 
 interface FormErrors {
     title?: string;

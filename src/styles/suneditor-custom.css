@@ -1,0 +1,279 @@
+/* SunEditor Custom Styles */
+.sun-editor {
+    font-family: 'Poppins', sans-serif !important;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    margin-bottom: 2rem;
+}
+
+.sun-editor .se-toolbar {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e2e8f0;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+    padding: 4px;
+}
+
+.sun-editor .se-toolbar-separator {
+    border-color: #e2e8f0;
+}
+
+.sun-editor .se-btn-tray {
+    padding: 5px;
+}
+
+.sun-editor .se-btn {
+    margin: 0 2px;
+    border-radius: 4px;
+}
+
+.sun-editor .se-btn:hover {
+    background-color: #eef2ff;
+}
+
+.sun-editor .se-btn:active,
+.sun-editor .se-btn.active {
+    background-color: #4f46e5;
+    color: white;
+}
+
+.sun-editor .se-btn-list:focus {
+    outline: none;
+    border-color: #4f46e5;
+}
+
+/* Editor content area */
+.sun-editor .se-wrapper {
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+.sun-editor .se-wrapper .se-wrapper-inner {
+    padding: 0;
+}
+
+.sun-editor .se-wrapper .se-wrapper-wysiwyg {
+    padding: 16px;
+}
+
+/* Typography */
+.sun-editor .se-wrapper .se-wrapper-wysiwyg p,
+.sun-editor .se-wrapper .se-wrapper-wysiwyg div,
+.sun-editor .se-wrapper .se-wrapper-wysiwyg span {
+    font-size: 16px;
+    line-height: 1.6;
+    margin-bottom: 1em;
+}
+
+.sun-editor .se-wrapper .se-wrapper-wysiwyg h1 {
+    font-size: 2rem;
+    font-weight: 600;
+    margin-bottom: 1em;
+}
+
+.sun-editor .se-wrapper .se-wrapper-wysiwyg h2 {
+    font-size: 1.75rem;
+    font-weight: 600;
+    margin-bottom: 0.75em;
+}
+
+.sun-editor .se-wrapper .se-wrapper-wysiwyg h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 0.75em;
+}
+
+.sun-editor .se-wrapper .se-wrapper-wysiwyg h4 {
+    font-size: 1.25rem;
+    font-weight: 500;
+    margin-bottom: 0.75em;
+}
+
+.sun-editor .se-wrapper .se-wrapper-wysiwyg h5 {
+    font-size: 1.1rem;
+    font-weight: 500;
+    margin-bottom: 0.5em;
+}
+
+.sun-editor .se-wrapper .se-wrapper-wysiwyg h6 {
+    font-size: 1rem;
+    font-weight: 500;
+    margin-bottom: 0.5em;
+}
+
+/* Lists */
+.sun-editor .se-wrapper .se-wrapper-wysiwyg ul,
+.sun-editor .se-wrapper .se-wrapper-wysiwyg ol {
+    padding-left: 2em;
+    margin-bottom: 1em;
+}
+
+.sun-editor .se-wrapper .se-wrapper-wysiwyg li {
+    margin-bottom: 0.5em;
+}
+
+/* Blockquote */
+.sun-editor .se-wrapper .se-wrapper-wysiwyg blockquote {
+    border-left: 4px solid #4f46e5;
+    padding-left: 1em;
+    margin-left: 0;
+    margin-right: 0;
+    margin-bottom: 1em;
+    color: #4b5563;
+    font-style: italic;
+}
+
+/* Links */
+.sun-editor .se-wrapper .se-wrapper-wysiwyg a {
+    color: #4f46e5;
+    text-decoration: underline;
+}
+
+/* Images */
+.sun-editor .se-wrapper .se-wrapper-wysiwyg img {
+    max-width: 100%;
+    height: auto;
+    margin: 1em 0;
+    border-radius: 4px;
+}
+
+/* Tables */
+.sun-editor .se-wrapper .se-wrapper-wysiwyg table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1em;
+}
+
+.sun-editor .se-wrapper .se-wrapper-wysiwyg table th,
+.sun-editor .se-wrapper .se-wrapper-wysiwyg table td {
+    border: 1px solid #e2e8f0;
+    padding: 8px;
+}
+
+.sun-editor .se-wrapper .se-wrapper-wysiwyg table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+/* Code */
+.sun-editor .se-wrapper .se-wrapper-wysiwyg pre {
+    background-color: #f3f4f6;
+    padding: 1em;
+    border-radius: 4px;
+    font-family: monospace;
+    white-space: pre-wrap;
+    margin-bottom: 1em;
+}
+
+.sun-editor .se-wrapper .se-wrapper-wysiwyg code {
+    font-family: monospace;
+    background-color: #f3f4f6;
+    padding: 0.2em 0.4em;
+    border-radius: 3px;
+}
+
+/* Horizontal rule */
+.sun-editor .se-wrapper .se-wrapper-wysiwyg hr {
+    border: none;
+    border-top: 1px solid #e2e8f0;
+    margin: 1.5em 0;
+}
+
+/* Placeholder */
+.sun-editor .se-wrapper .se-placeholder {
+    color: #9ca3af;
+    font-style: italic;
+}
+
+/* Popup dialogs */
+.sun-editor .se-dialog {
+    border-radius: 6px;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    border: 1px solid #e2e8f0;
+}
+
+.sun-editor .se-dialog .se-dialog-header {
+    background-color: #f8f9fa;
+    border-bottom: 1px solid #e2e8f0;
+    padding: 10px 15px;
+}
+
+.sun-editor .se-dialog .se-dialog-header .se-dialog-close {
+    color: #4b5563;
+}
+
+.sun-editor .se-dialog .se-dialog-header .se-dialog-close:hover {
+    background-color: #e5e7eb;
+}
+
+.sun-editor .se-dialog .se-dialog-body {
+    padding: 15px;
+}
+
+.sun-editor .se-dialog .se-dialog-footer {
+    padding: 10px 15px;
+    border-top: 1px solid #e2e8f0;
+}
+
+/* Form controls in dialogs */
+.sun-editor .se-dialog input,
+.sun-editor .se-dialog select,
+.sun-editor .se-dialog textarea {
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 6px 10px;
+    font-family: 'Poppins', sans-serif;
+    width: 100%;
+    margin-bottom: 10px;
+}
+
+.sun-editor .se-dialog input:focus,
+.sun-editor .se-dialog select:focus,
+.sun-editor .se-dialog textarea:focus {
+    border-color: #4f46e5;
+    outline: none;
+}
+
+.sun-editor .se-dialog .se-btn-primary {
+    background-color: #4f46e5;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-weight: 500;
+}
+
+.sun-editor .se-dialog .se-btn-primary:hover {
+    background-color: #4338ca;
+}
+
+.sun-editor .se-dialog .se-btn-cancel {
+    background-color: #f3f4f6;
+    color: #4b5563;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-weight: 500;
+}
+
+.sun-editor .se-dialog .se-btn-cancel:hover {
+    background-color: #e5e7eb;
+}
+
+/* Focus state */
+.sun-editor.se-focus {
+    border-color: #4f46e5;
+    box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.2);
+}
+
+/* Responsive */
+@media (max-width: 767px) {
+    .sun-editor .se-btn-tray {
+        white-space: normal;
+        flex-wrap: wrap;
+    }
+
+    .sun-editor .se-btn {
+        margin: 2px;
+    }
+}

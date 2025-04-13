@@ -1,37 +1,224 @@
-
-import React, { useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { initiateGoogleLogin } from '../services/auth';
+import GoogleLoginButton from './GoogleLoginButton';
+
+enum AuthMode {
+    LOGIN = 'login',
+    REGISTER = 'register'
+}
 
 const Login: React.FC = () => {
-    const { isAuthenticated } = useAuth();
+    const { isAuthenticated, isAdmin, signInWithGoogle, signInWithCredentials, register, error } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+    const [mode, setMode] = useState<AuthMode>(AuthMode.LOGIN);
+
+    // Form states
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [email, setEmail] = useState('');
+    const [name, setName] = useState('');
+    const [formError, setFormError] = useState<string | null>(null);
+
+    // Check if user was redirected from admin page
+    const fromAdmin = location.state?.fromAdmin || false;
 
     useEffect(() => {
         if (isAuthenticated) {
-            navigate('/');
+            // Redirect to admin page if they're an admin and were trying to access admin pages
+            if (isAdmin && fromAdmin) {
+                navigate('/admin');
+            } else {
+                // Regular users go to home page
+                navigate('/');
+            }
         }
-    }, [isAuthenticated, navigate]);
+    }, [isAuthenticated, isAdmin, navigate, fromAdmin]);
+
+    const handleGoogleLogin = async () => {
+        try {
+            await signInWithGoogle();
+            // Navigation is handled in the useEffect
+        } catch (error) {
+            console.error('Google login error:', error);
+        }
+    };
+
+    const handleCredentialsLogin = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setFormError(null);
+
+        if (!username || !password) {
+            setFormError('Username and password are required');
+            return;
+        }
+
+        try {
+            await signInWithCredentials({ username, password });
+            // Navigation is handled in the useEffect
+        } catch (error: any) {
+            console.error('Login error:', error);
+            setFormError(error.message || 'Invalid username or password');
+        }
+    };
+
+    const handleRegister = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setFormError(null);
+
+        if (!username || !password || !email || !name) {
+            setFormError('All fields are required');
+            return;
+        }
+
+        if (password.length < 6) {
+            setFormError('Password must be at least 6 characters');
+            return;
+        }
+
+        try {
+            await register({ username, password, email, name });
+            // Navigation is handled in the useEffect
+        } catch (error: any) {
+            console.error('Registration error:', error);
+            setFormError(error.message || 'Failed to register');
+        }
+    };
+
+    const toggleMode = () => {
+        setMode(mode === AuthMode.LOGIN ? AuthMode.REGISTER : AuthMode.LOGIN);
+        setFormError(null);
+    };
 
     return (
-        <div className="login-container">
-            <div className="card" style={{ maxWidth: '400px', margin: '2rem auto' }}>
-                <div className="card-header">
-                    <h2>Login to Blog Platform</h2>
+        <div className="container mt-5">
+            <div className="row">
+                <div className="col-md-6">
+                    <div className="card shadow-sm">
+                        <div className="card-header bg-primary text-white">
+                            <h3 className="mb-0">{mode === AuthMode.LOGIN ? 'Login' : 'Register'}</h3>
+                        </div>
+                        <div className="card-body">
+                            {(formError || error) && (
+                                <div className="alert alert-danger" role="alert">
+                                    {formError || error}
+                                </div>
+                            )}
+
+                            {mode === AuthMode.LOGIN ? (
+                                <form onSubmit={handleCredentialsLogin}>
+                                    <div className="mb-3">
+                                        <label htmlFor="username" className="form-label">Username</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            id="username"
+                                            value={username}
+                                            onChange={(e) => setUsername(e.target.value)}
+                                            placeholder="Enter your username"
+                                        />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label htmlFor="password" className="form-label">Password</label>
+                                        <input
+                                            type="password"
+                                            className="form-control"
+                                            id="password"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            placeholder="Enter your password"
+                                        />
+                                    </div>
+                                    <div className="d-grid gap-2">
+                                        <button type="submit" className="btn btn-primary">Login</button>
+                                        <GoogleLoginButton onClick={handleGoogleLogin} text="Sign in with Google" />
+                                    </div>
+                                </form>
+                            ) : (
+                                <form onSubmit={handleRegister}>
+                                    <div className="mb-3">
+                                        <label htmlFor="name" className="form-label">Full Name</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            id="name"
+                                            value={name}
+                                            onChange={(e) => setName(e.target.value)}
+                                            placeholder="Enter your full name"
+                                        />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label htmlFor="email" className="form-label">Email</label>
+                                        <input
+                                            type="email"
+                                            className="form-control"
+                                            id="email"
+                                            value={email}
+                                            onChange={(e) => setEmail(e.target.value)}
+                                            placeholder="Enter your email"
+                                        />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label htmlFor="username" className="form-label">Username</label>
+                                        <input
+                                            type="text"
+                                            className="form-control"
+                                            id="username"
+                                            value={username}
+                                            onChange={(e) => setUsername(e.target.value)}
+                                            placeholder="Choose a username"
+                                        />
+                                    </div>
+                                    <div className="mb-3">
+                                        <label htmlFor="password" className="form-label">Password</label>
+                                        <input
+                                            type="password"
+                                            className="form-control"
+                                            id="password"
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            placeholder="Create a password"
+                                        />
+                                        <div className="form-text">Password must be at least 6 characters long.</div>
+                                    </div>
+                                    <div className="d-grid">
+                                        <button type="submit" className="btn btn-primary">Register</button>
+                                    </div>
+                                </form>
+                            )}
+
+                            <div className="mt-3 text-center">
+                                <button className="btn btn-link" onClick={toggleMode}>
+                                    {mode === AuthMode.LOGIN
+                                        ? "Don't have an account? Register"
+                                        : "Already have an account? Login"}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div className="card-body">
-                    <p style={{ marginBottom: '1.5rem', textAlign: 'center' }}>
-                        Sign in with your Google account to continue
-                    </p>
-                    <button
-                        onClick={initiateGoogleLogin}
-                        className="btn btn-primary w-100"
-                        style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}
-                    >
-                        <img src="https://www.google.com/favicon.ico" alt="Google" width="20" height="20" />
-                        Sign in with Google
-                    </button>
+
+                <div className="col-md-6">
+                    <div className="card bg-light shadow-sm h-100">
+                        <div className="card-body d-flex flex-column justify-content-center">
+                            <h2 className="text-center mb-4">Welcome to Blog Platform</h2>
+                            <p className="text-center mb-4">
+                                Join our community to read and share amazing content.
+                            </p>
+                            <div className="card-text">
+                                <h5><i className="bi bi-check-circle-fill text-success me-2"></i>Read articles from expert writers</h5>
+                                <h5><i className="bi bi-check-circle-fill text-success me-2"></i>Engage with the community through comments</h5>
+                                <h5><i className="bi bi-check-circle-fill text-success me-2"></i>Stay updated with the latest trends</h5>
+                            </div>
+                            {mode === AuthMode.LOGIN && (
+                                <div className="alert alert-info mt-4" role="alert">
+                                    <i className="bi bi-info-circle-fill me-2"></i>
+                                    Login with your credentials or use Google Sign-In for faster access.
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
