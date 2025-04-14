@@ -131,7 +131,23 @@ const Login: React.FC = () => {
                                         />
                                     </div>
                                     <div className="d-grid gap-2">
-                                        <button type="submit" className="btn btn-primary">Login</button>
+                                        <button
+                                            type="submit"
+                                            className="btn btn-lg d-flex align-items-center justify-content-center gap-2 w-100 border"
+                                            style={{
+                                                backgroundColor: '#4285F4',
+                                                color: '#ffffff',
+                                                transition: 'all 0.2s ease-in-out',
+                                                boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
+                                                padding: '8px 16px',
+                                                borderRadius: '4px',
+                                            }}
+                                        >
+                                            <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                                <path fill="#ffffff" d="M12 2a10 10 0 00-6.88 17.26l-.44.29a1 1 0 00-.37.41 1 1 0 001.6 1.13L12 17l6.09 4.08a1 1 0 001.59-1.13 1 1 0 00-.37-.4l-.44-.3A10 10 0 0012 2zm0 18a8 8 0 01-5.55-2.25 1 1 0 00-.1.09L12 22l5.65-3.79a.56.56 0 00-.1-.21A8 8 0 1112 20z" />
+                                            </svg>
+                                            <span>Login with Email</span>
+                                        </button>
                                         <GoogleLoginButton onClick={handleGoogleLogin} text="Sign in with Google" />
                                     </div>
                                 </form>
@@ -183,7 +199,23 @@ const Login: React.FC = () => {
                                         <div className="form-text">Password must be at least 6 characters long.</div>
                                     </div>
                                     <div className="d-grid">
-                                        <button type="submit" className="btn btn-primary">Register</button>
+                                        <button
+                                            type="submit"
+                                            className="btn btn-lg d-flex align-items-center justify-content-center gap-2 w-100 border"
+                                            style={{
+                                                backgroundColor: '#4285F4',
+                                                color: '#ffffff',
+                                                transition: 'all 0.2s ease-in-out',
+                                                boxShadow: '0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24)',
+                                                padding: '8px 16px',
+                                                borderRadius: '4px',
+                                            }}
+                                        >
+                                            <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
+                                                <path fill="#ffffff" d="M16 2H8a2 2 0 00-2 2v16a2 2 0 002 2h8a2 2 0 002-2V4a2 2 0 00-2-2zm-3 19h-2v-1h2zm4-3H7V4h10z" />
+                                            </svg>
+                                            <span>Create Account</span>
+                                        </button>
                                     </div>
                                 </form>
                             )}

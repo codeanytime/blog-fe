@@ -75,6 +75,19 @@ const NewPostPage: React.FC = () => {
             return;
         }
 
+        // First, verify that we have a valid auth token to prevent triggering Google OAuth
+        const token = localStorage.getItem('authToken');
+        if (!token) {
+            console.error('No authentication token found - cannot create post');
+            setErrors({
+                ...errors,
+                submit: 'Authentication error. Please login again before creating a post.'
+            });
+            return;
+        }
+
+        console.log('Found authentication token - proceeding with post creation');
+
         try {
             setSubmitting(true);
 

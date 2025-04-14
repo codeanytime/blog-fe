@@ -1,6 +1,7 @@
 import React, { createContext, useState, useContext, useEffect, ReactNode } from 'react';
-import { loginWithGoogle, logout, getCurrentUser, loginWithCredentials, registerUser } from '../services/auth';
+import { loginWithGoogle, logout, getCurrentUser } from '../services/auth';
 import { User, LoginCredentials } from '../types';
+import { getApiEndpoint } from '../utils/apiConfig';
 
 interface AuthContextType {
     currentUser: User | null;
@@ -59,12 +60,48 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setLoading(true);
             setError(null);
 
-            const user = await loginWithCredentials(credentials);
+            console.log('Authenticating with username/password - no Google OAuth should be triggered');
+
+            // Set a flag in localStorage to indicate we're using username/password auth
+            // This will help prevent any Google OAuth redirects
+            localStorage.setItem('auth_method', 'credentials');
+
+            // Get the login endpoint URL using our utility
+            const loginUrl = getApiEndpoint('auth/login');
+            console.log(`Using login URL: ${loginUrl}`);
+
+            // Direct implementation to ensure complete control over request headers
+            const response = await fetch(loginUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Skip-Auth-Redirect': 'true',
+                    'X-Auth-Method': 'credentials'
+                },
+                body: JSON.stringify(credentials),
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                throw new Error('Invalid username or password');
+            }
+
+            const data = await response.json();
+            console.log('Login response:', data);
+
+            // Store the auth token
+            if (data.token) {
+                localStorage.setItem('authToken', data.token);
+            }
+
+            // Set the user
+            const user = data.user;
             if (user) {
                 setCurrentUser(user);
                 setIsAuthenticated(true);
                 setIsAdmin(user.role === 'ADMIN');
             }
+
             return user;
         } catch (error: any) {
             console.error('Sign-in error:', error);
@@ -80,7 +117,42 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             setLoading(true);
             setError(null);
 
-            const user = await registerUser(userData);
+            // Set a flag in localStorage to indicate we're using username/password auth
+            localStorage.setItem('auth_method', 'credentials');
+
+            // Directly handle registration to prevent OAuth redirects
+            const registerUrl = getApiEndpoint('auth/register');
+            console.log(`Using register URL for direct fetch: ${registerUrl}`);
+
+            // Use direct fetch with headers that prevent OAuth redirects
+            const response = await fetch(registerUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Skip-Auth-Redirect': 'true',
+                    'X-Auth-Method': 'credentials'
+                },
+                body: JSON.stringify(userData),
+                credentials: 'include'
+            });
+
+            if (!response.ok) {
+                if (response.status === 400) {
+                    throw new Error('Registration failed. Username or email may already exist.');
+                } else {
+                    throw new Error(`Server error: ${response.status}`);
+                }
+            }
+
+            const data = await response.json();
+            console.log("Registration response:", data);
+
+            // Store the JWT token in localStorage for auth if provided
+            if (data.token) {
+                localStorage.setItem('authToken', data.token);
+            }
+
+            const user = data.user;
             if (user) {
                 setCurrentUser(user);
                 setIsAuthenticated(true);

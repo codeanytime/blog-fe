@@ -1,5 +1,5 @@
-import api from './api';
 import { User, LoginCredentials } from '../types';
+import { getApiEndpoint } from '../utils/apiConfig';
 
 /**
  * Login with username and password
@@ -8,37 +8,48 @@ import { User, LoginCredentials } from '../types';
  */
 export const loginWithCredentials = async (credentials: LoginCredentials): Promise<User | null> => {
   try {
-    // Use the correct endpoint with error handling
-    console.log("Attempting login with credentials");
-    const response = await api.post('/api/login', credentials);
-    console.log("Login response:", response.data);
+    // Use direct fetch instead of api service to ensure proper header control
+    console.log("Attempting login with credentials - DIRECT FETCH (preventing Google OAuth redirects)");
+    
+    // Set flag in localStorage to indicate we're using username/password auth
+    localStorage.setItem('auth_method', 'credentials');
+    
+    // Get the login endpoint URL using our utility
+    const loginUrl = getApiEndpoint('auth/login');
+    console.log(`Using login URL: ${loginUrl}`);
+    
+    // Use direct fetch to have full control over request headers
+    const response = await fetch(loginUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Skip-Auth-Redirect': 'true',
+        'X-Auth-Method': 'credentials'
+      },
+      body: JSON.stringify(credentials),
+      credentials: 'include'
+    });
+    
+    if (!response.ok) {
+      if (response.status === 401) {
+        throw new Error('Invalid username or password');
+      } else {
+        throw new Error(`Server error: ${response.status}`);
+      }
+    }
+    
+    const data = await response.json();
+    console.log("Login response:", data);
     
     // Store the JWT token in localStorage for auth
-    if (response.data && response.data.token) {
-      localStorage.setItem('authToken', response.data.token);
-      return response.data.user;
+    if (data && data.token) {
+      localStorage.setItem('authToken', data.token);
+      return data.user;
     } else {
       throw new Error("Invalid response format from login endpoint");
     }
   } catch (error: any) {
     console.error('Login error:', error);
-    
-    // For development, if we can't connect to the backend, use a mock token
-    if (error.message?.includes('Network Error') || error.message?.includes('Backend')) {
-      console.log('Using mock authentication in development mode');
-      const mockToken = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJhZG1pbkBleGFtcGxlLmNvbSIsIm5hbWUiOiJBZG1pbiBVc2VyIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c';
-      localStorage.setItem('authToken', mockToken);
-      return {
-        id: 1,
-        name: 'Admin User',
-        email: 'admin@example.com',
-        role: 'ADMIN',
-        pictureUrl: 'https://randomuser.me/api/portraits/men/1.jpg',
-        username: 'admin',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-    }
     throw error;
   }
 };
@@ -51,15 +62,39 @@ export const loginWithCredentials = async (credentials: LoginCredentials): Promi
 export const registerUser = async (userData: { username: string; password: string; email: string; name: string }): Promise<User | null> => {
   try {
     console.log("Attempting user registration");
-    const response = await api.post('/api/register', userData);
-    console.log("Registration response:", response.data);
+    
+    // Get the register endpoint URL using our utility
+    const registerUrl = getApiEndpoint('auth/register');
+    console.log(`Using register URL: ${registerUrl}`);
+    
+    // Use direct fetch for consistency with other auth methods
+    const response = await fetch(registerUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Skip-Auth-Redirect': 'true'
+      },
+      body: JSON.stringify(userData),
+      credentials: 'include'
+    });
+    
+    if (!response.ok) {
+      if (response.status === 400) {
+        throw new Error('Registration failed. Username may already exist.');
+      } else {
+        throw new Error(`Server error: ${response.status}`);
+      }
+    }
+    
+    const data = await response.json();
+    console.log("Registration response:", data);
     
     // Store the JWT token in localStorage for auth if provided
-    if (response.data && response.data.token) {
-      localStorage.setItem('authToken', response.data.token);
-      return response.data.user;
+    if (data && data.token) {
+      localStorage.setItem('authToken', data.token);
+      return data.user;
     } else {
-      return response.data;
+      return data;
     }
   } catch (error: any) {
     console.error('Registration error:', error);
@@ -76,16 +111,27 @@ export const loginWithGoogle = async (): Promise<User | null> => {
   try {
     console.log("Explicitly attempting Google login by user request");
     
-    // Don't proceed if we're already authenticated with a token
-    // This prevents accidental Google OAuth redirects during normal operations
+    // IMPORTANT: Block ALL Google OAuth redirect requests if we're already authenticated
+    // This prevents accidental Google OAuth redirects during normal operations like post editing
     const existingToken = localStorage.getItem('authToken');
     if (existingToken) {
-      console.log('User is already authenticated with a token, skipping Google login');
-      const currentUser = await getCurrentUser();
-      if (currentUser) {
-        return currentUser;
+      console.log('User is already authenticated with a token, BLOCKING Google login redirect');
+      // Get current user with the existing token instead of triggering OAuth
+      try {
+        const currentUser = await getCurrentUser();
+        if (currentUser) {
+          console.log('Returning existing user instead of triggering Google OAuth');
+          return currentUser;
+        }
+      } catch (userError) {
+        console.error('Error getting current user with existing token:', userError);
+        // If token is invalid, continue with fresh login process (removing the bad token)
+        localStorage.removeItem('authToken');
       }
     }
+    
+    // This section only runs if the user explicitly requested Google login AND
+    // there's no existing valid authentication token
     
     // Define our client ID from environment variable
     const googleClientId = process.env.REACT_APP_GOOGLE_CLIENT_ID;
@@ -97,13 +143,29 @@ export const loginWithGoogle = async (): Promise<User | null> => {
     
     // Use our simplified google-login endpoint
     try {
-      console.log('Calling /api/google-login endpoint...');
-      const response = await api.post('/api/google-login', {});
-      console.log("Google login response:", response.data);
+      // Get the Google login endpoint URL using our utility 
+      const googleLoginUrl = getApiEndpoint('auth/google');
+      console.log(`Calling Google login endpoint: ${googleLoginUrl}`);
       
-      if (response.data && response.data.token) {
-        localStorage.setItem('authToken', response.data.token);
-        return response.data.user;
+      // Use direct fetch for consistency with other auth methods
+      const response = await fetch(googleLoginUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        credentials: 'include'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Google login failed with status: ${response.status}`);
+      }
+      
+      const data = await response.json();
+      console.log("Google login response:", data);
+      
+      if (data && data.token) {
+        localStorage.setItem('authToken', data.token);
+        return data.user;
       } else {
         throw new Error("Invalid response format from Google login endpoint");
       }
@@ -140,8 +202,24 @@ export const loginWithGoogle = async (): Promise<User | null> => {
 export const logout = async (): Promise<void> => {
   try {
     console.log("Attempting to logout");
-    await api.post('/api/logout');
+    
+    // Get the logout endpoint URL using our utility
+    const logoutUrl = getApiEndpoint('auth/logout');
+    console.log(`Using logout URL: ${logoutUrl}`);
+    
+    // Use direct fetch for consistency with other auth methods
+    await fetch(logoutUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Skip-Auth-Redirect': 'true'
+      },
+      credentials: 'include'
+    });
+    
+    // Clear all authentication related data
     localStorage.removeItem('authToken');
+    localStorage.removeItem('auth_method');
     
     // Revoke Google authentication if available
     // Typecasting window to access Google auth
@@ -153,6 +231,7 @@ export const logout = async (): Promise<void> => {
     console.error('Logout error:', error);
     // Still remove token on frontend even if backend logout fails
     localStorage.removeItem('authToken');
+    localStorage.removeItem('auth_method');
     throw error;
   }
 };
@@ -168,31 +247,41 @@ export const getCurrentUser = async (): Promise<User | null> => {
       return null;
     }
     
-    console.log("Retrieving current user from /api/user");
-    const response = await api.get('/api/user');
-    return response.data;
+    // Get the auth method from localStorage if it exists
+    const authMethod = localStorage.getItem('auth_method') || 'unknown';
+    console.log(`Retrieving current user from /api/user with auth method: ${authMethod}`);
+    
+    // Get the user endpoint URL using our utility
+    const userUrl = getApiEndpoint('auth/me');
+    console.log(`Using user URL: ${userUrl}`);
+    
+    // Use direct fetch to have full control over headers
+    const response = await fetch(userUrl, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+        'X-Skip-Auth-Redirect': 'true',
+        'X-Auth-Method': authMethod
+      },
+      credentials: 'include'
+    });
+    
+    if (!response.ok) {
+      if (response.status === 401 || response.status === 403) {
+        // Clear token if it's invalid or expired
+        localStorage.removeItem('authToken');
+      }
+      return null;
+    }
+    
+    const user = await response.json();
+    return user;
   } catch (error: any) {
     console.error('Get current user error:', error);
     
-    // For development, if we can't connect to the backend, use a mock user
-    if (error.message?.includes('Network Error') || error.message?.includes('Backend')) {
-      console.log('Using mock user in development mode');
-      return {
-        id: 1,
-        name: 'Admin User',
-        email: 'admin@example.com',
-        role: 'ADMIN',
-        pictureUrl: 'https://randomuser.me/api/portraits/men/1.jpg',
-        username: 'admin',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      };
-    }
-    
-    // Clear token if it's invalid or expired
-    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-      localStorage.removeItem('authToken');
-    }
+    // Clear token if there's an error
+    localStorage.removeItem('authToken');
     return null;
   }
 };

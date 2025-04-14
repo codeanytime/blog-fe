@@ -42,11 +42,19 @@ const AdminDashboard: React.FC = () => {
         }
 
         try {
+            console.log('Attempting to delete post with ID:', id);
             await deletePost(id);
+            console.log('Post deletion successful');
             setPosts(posts.filter(post => post.id !== id));
-        } catch (err) {
-            setError('Failed to delete post');
-            console.error(err);
+        } catch (err: any) {
+            const errorMessage = err.message || 'Failed to delete post';
+            setError(errorMessage);
+            console.error('Error deleting post:', err);
+
+            // Show a temporary error message that will disappear after 5 seconds
+            setTimeout(() => {
+                setError(null);
+            }, 5000);
         }
     };
 
@@ -77,14 +85,8 @@ const AdminDashboard: React.FC = () => {
         );
     }
 
-    if (error) {
-        return (
-            <div className="error-container">
-                <h2>Error</h2>
-                <p>{error}</p>
-            </div>
-        );
-    }
+    // Display error as notification within the page instead of replacing entire page
+    // This way the user can still see and interact with the admin dashboard
 
     return (
         <div className="admin-dashboard-container">
@@ -102,6 +104,19 @@ const AdminDashboard: React.FC = () => {
                     <i className="bi bi-folder-plus me-2"></i>{isCategoryCreating ? 'Creating...' : 'Create Sample Categories'}
                 </button>
             </div>
+
+            {/* Display error notification */}
+            {error && (
+                <div className="alert alert-danger mt-3">
+                    <strong>Error:</strong> {error}
+                    <button
+                        type="button"
+                        className="btn-close float-end"
+                        onClick={() => setError(null)}
+                        aria-label="Close"
+                    ></button>
+                </div>
+            )}
 
             {categoryMessage && (
                 <div className={`alert ${categoryMessage.includes('Failed') ? 'alert-danger' : 'alert-success'} mt-3`}>
